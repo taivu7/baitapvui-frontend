@@ -1,6 +1,16 @@
-import React from 'react'
+import React, { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import GreetingSection from '../components/dashboard/GreetingSection'
 
 const TeacherDashboard: React.FC = () => {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  // Handler for creating new assignment
+  const handleCreateAssignment = useCallback(() => {
+    navigate('/teacher/assignments/new')
+  }, [navigate])
   // Mock data for demonstration
   const mockAssignments = [
     {
@@ -90,22 +100,12 @@ const TeacherDashboard: React.FC = () => {
     <main className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-6 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Greeting & CTA Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black text-[#111813] dark:text-white tracking-tight mb-2">
-              Good morning, Teacher Hoa!
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Here is an overview of your classes and student progress today.
-            </p>
-          </div>
-          <button className="flex items-center justify-center gap-2 bg-primary hover:bg-green-400 text-[#0d3b1e] px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95 group">
-            <span className="material-symbols-outlined group-hover:rotate-90 transition-transform">
-              add
-            </span>
-            <span>Create New Assignment</span>
-          </button>
-        </div>
+        <GreetingSection
+          firstName={user?.first_name || 'Teacher'}
+          lastName={user?.last_name}
+          role={user?.role || 'teacher'}
+          onCreateAssignment={handleCreateAssignment}
+        />
 
         {/* Overview Statistics Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
