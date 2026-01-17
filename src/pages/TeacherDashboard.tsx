@@ -1,17 +1,54 @@
+/**
+ * TeacherDashboard Page
+ *
+ * Main dashboard page for teachers displaying:
+ * - Personalized greeting section
+ * - Overview statistics cards (KAN-34)
+ * - Current assignments list
+ * - Recent activity feed
+ * - Teacher tips
+ */
+
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import GreetingSection from '../components/dashboard/GreetingSection'
+import { GreetingSection, OverviewStatistics } from '../components/dashboard'
+import { useTeacherStatistics } from '../hooks'
 
 const TeacherDashboard: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  // Fetch teacher statistics using the custom hook
+  const { statistics, isLoading, error, refetch } = useTeacherStatistics()
+
   // Handler for creating new assignment
   const handleCreateAssignment = useCallback(() => {
     navigate('/teacher/assignments/new')
   }, [navigate])
-  // Mock data for demonstration
+
+  // Handler for statistics card clicks (optional navigation)
+  const handleStatisticClick = useCallback(
+    (statisticId: string) => {
+      // Navigate to relevant pages based on statistic type
+      const routeMap: Record<string, string> = {
+        'active-assignments': '/teacher/assignments',
+        'pending-grading': '/teacher/grading',
+        'avg-class-score': '/teacher/analytics',
+        'active-classes': '/teacher/classes',
+        'total-students': '/teacher/students',
+        'completion-rate': '/teacher/analytics',
+      }
+
+      const route = routeMap[statisticId]
+      if (route) {
+        navigate(route)
+      }
+    },
+    [navigate]
+  )
+
+  // Mock data for demonstration (to be replaced with real data)
   const mockAssignments = [
     {
       id: 1,
@@ -107,50 +144,15 @@ const TeacherDashboard: React.FC = () => {
           onCreateAssignment={handleCreateAssignment}
         />
 
-        {/* Overview Statistics Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Active Assignments Card */}
-          <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                <span className="material-symbols-outlined">assignment</span>
-              </div>
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                +2 New
-              </span>
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Active Assignments</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">4</p>
-          </div>
-
-          {/* Submissions to Grade Card */}
-          <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-                <span className="material-symbols-outlined">notification_important</span>
-              </div>
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                Action Needed
-              </span>
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Submissions to Grade</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">12</p>
-          </div>
-
-          {/* Average Class Score Card */}
-          <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
-                <span className="material-symbols-outlined">analytics</span>
-              </div>
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                This Week
-              </span>
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Avg Class Score</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">85%</p>
-          </div>
-        </div>
+        {/* Overview Statistics Section (KAN-34) */}
+        <OverviewStatistics
+          statistics={statistics}
+          isLoading={isLoading}
+          error={error}
+          columns={3}
+          onCardClick={handleStatisticClick}
+          onRetry={refetch}
+        />
 
         {/* Main Content Grid: Assignments & Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -184,7 +186,7 @@ const TeacherDashboard: React.FC = () => {
                         <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-md font-medium">
                           {assignment.className}
                         </span>
-                        <span className="text-gray-400 text-xs">•</span>
+                        <span className="text-gray-400 text-xs">-</span>
                         <span className="text-gray-500 dark:text-gray-400 text-xs font-medium flex items-center gap-1">
                           <span className="material-symbols-outlined text-[14px]">
                             {assignment.status === 'completed' ? 'check_circle' : 'schedule'}
