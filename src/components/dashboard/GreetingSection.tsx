@@ -112,8 +112,8 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({
         </p>
       </div>
 
-      {/* CTA Button */}
-      {onCreateAssignment && (
+      {/* CTA Button - Only visible for teachers */}
+      {role === 'teacher' && onCreateAssignment && (
         <button
           onClick={onCreateAssignment}
           className="flex items-center justify-center gap-2 bg-primary hover:bg-green-400 text-[#0d3b1e] px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95 group whitespace-nowrap"
@@ -125,7 +125,7 @@ const GreetingSection: React.FC<GreetingSectionProps> = ({
           >
             add
           </span>
-          <span>Create New Assignment</span>
+          <span>Create Assignment</span>
         </button>
       )}
     </section>
