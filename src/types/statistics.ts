@@ -68,35 +68,50 @@ export interface StatisticItem {
 
 /**
  * Teacher statistics overview data from API
+ * Maps to backend DashboardStatistics struct
  */
 export interface TeacherStatistics {
-  /** Total number of active assignments (published, not past due) */
-  activeAssignments: number
-  /** Number of new assignments created in the current period */
-  newAssignments: number
-  /** Total submissions pending grading */
-  pendingGrading: number
-  /** Total number of submissions received */
-  totalSubmissions: number
-  /** Number of active classes */
-  activeClasses: number
-  /** Average completion rate as a percentage (0-100) */
-  averageCompletionRate: number
-  /** Average class score as a percentage (0-100) */
-  averageClassScore: number
+  /** Total number of assignments */
+  total_assignments: number
+  /** Number of published assignments */
+  published_assignments: number
+  /** Number of draft assignments */
+  draft_assignments: number
+  /** Total number of classes */
+  total_classes: number
   /** Total number of students across all classes */
-  totalStudents: number
-  /** Statistics timestamp */
-  lastUpdated: string
+  total_students: number
+  /** Total number of submissions received */
+  total_submissions: number
+  /** Total submissions pending grading */
+  pending_grading: number
+  /** Average score as a percentage (0-100) */
+  average_score: number
+  /** Submission rate as a percentage (0-100) */
+  submission_rate: number
+  /** Number of active assignments (published, not past due) - calculated field */
+  active_assignments?: number
+  /** Number of new assignments created in the current period - calculated field */
+  new_assignments?: number
 }
 
 /**
- * API response wrapper for teacher statistics
+ * Recent activity item from API
+ */
+export interface RecentActivityItem {
+  id: number
+  type: string
+  title: string
+  description: string
+  timestamp: string
+}
+
+/**
+ * API response wrapper for teacher dashboard (matches backend TeacherDashboardResponse)
  */
 export interface TeacherStatisticsResponse {
-  data: TeacherStatistics
-  success: boolean
-  message?: string
+  statistics: TeacherStatistics
+  recent_activity: RecentActivityItem[]
 }
 
 /**

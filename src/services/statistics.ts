@@ -10,18 +10,20 @@ import { TeacherStatistics, TeacherStatisticsResponse } from '../types/statistic
 
 /**
  * Mock statistics data for development
- * This will be replaced with actual API calls when KAN-35 is completed
+ * Matches backend DashboardStatistics structure
  */
 const mockTeacherStatistics: TeacherStatistics = {
-  activeAssignments: 4,
-  newAssignments: 2,
-  pendingGrading: 12,
-  totalSubmissions: 156,
-  activeClasses: 5,
-  averageCompletionRate: 78,
-  averageClassScore: 85,
-  totalStudents: 127,
-  lastUpdated: new Date().toISOString(),
+  total_assignments: 6,
+  published_assignments: 4,
+  draft_assignments: 2,
+  total_classes: 5,
+  total_students: 127,
+  total_submissions: 156,
+  pending_grading: 12,
+  average_score: 85,
+  submission_rate: 78,
+  active_assignments: 4,
+  new_assignments: 2,
 }
 
 /**
@@ -46,23 +48,16 @@ const statisticsService = {
       // Simulate network delay for realistic UX
       await simulateNetworkDelay()
 
-      // Add some randomization to make the mock data more realistic
-      const variation = () => Math.floor(Math.random() * 3) - 1 // -1, 0, or 1
-
+      // Return stable mock data (no randomization for consistent testing)
       return {
         ...mockTeacherStatistics,
-        activeAssignments: mockTeacherStatistics.activeAssignments + variation(),
-        newAssignments: Math.max(0, mockTeacherStatistics.newAssignments + variation()),
-        pendingGrading: mockTeacherStatistics.pendingGrading + variation(),
-        averageClassScore: Math.min(100, Math.max(0, mockTeacherStatistics.averageClassScore + variation() * 2)),
-        lastUpdated: new Date().toISOString(),
       }
     }
 
-    // Real API call (to be used when backend is ready)
+    // Real API call
     try {
-      const response = await apiClient.get<TeacherStatisticsResponse>('/dashboard/teacher/statistics')
-      return response.data.data
+      const response = await apiClient.get<TeacherStatisticsResponse>('/dashboard/teacher')
+      return response.data.statistics
     } catch (error) {
       console.error('Failed to fetch teacher statistics:', error)
       throw error
@@ -88,19 +83,18 @@ const statisticsService = {
 
       return {
         ...mockTeacherStatistics,
-        totalSubmissions: Math.floor(mockTeacherStatistics.totalSubmissions * multiplier),
-        newAssignments: Math.floor(mockTeacherStatistics.newAssignments * multiplier),
-        pendingGrading: Math.floor(mockTeacherStatistics.pendingGrading * multiplier),
-        lastUpdated: new Date().toISOString(),
+        total_submissions: Math.floor(mockTeacherStatistics.total_submissions * multiplier),
+        new_assignments: Math.floor((mockTeacherStatistics.new_assignments || 0) * multiplier),
+        pending_grading: Math.floor(mockTeacherStatistics.pending_grading * multiplier),
       }
     }
 
     // Real API call
     try {
       const response = await apiClient.get<TeacherStatisticsResponse>(
-        `/dashboard/teacher/statistics?period=${period}`
+        `/dashboard/teacher?period=${period}`
       )
-      return response.data.data
+      return response.data.statistics
     } catch (error) {
       console.error('Failed to fetch teacher statistics by period:', error)
       throw error

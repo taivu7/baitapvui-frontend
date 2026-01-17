@@ -30,6 +30,7 @@ interface StatisticConfig {
 
 /**
  * Default statistics configuration matching the design
+ * Uses backend field names (snake_case)
  */
 const DEFAULT_STATISTICS_CONFIG: StatisticConfig[] = [
   {
@@ -37,10 +38,10 @@ const DEFAULT_STATISTICS_CONFIG: StatisticConfig[] = [
     title: 'Active Assignments',
     icon: 'assignment',
     iconColor: 'blue',
-    getValue: (data) => data.activeAssignments,
+    getValue: (data) => data.active_assignments ?? data.published_assignments,
     getBadge: (data) =>
-      data.newAssignments > 0
-        ? { text: `+${data.newAssignments} New`, variant: 'success' as BadgeVariant }
+      (data.new_assignments ?? 0) > 0
+        ? { text: `+${data.new_assignments} New`, variant: 'success' as BadgeVariant }
         : undefined,
   },
   {
@@ -48,9 +49,9 @@ const DEFAULT_STATISTICS_CONFIG: StatisticConfig[] = [
     title: 'Submissions to Grade',
     icon: 'notification_important',
     iconColor: 'amber',
-    getValue: (data) => data.pendingGrading,
+    getValue: (data) => data.pending_grading,
     getBadge: (data) =>
-      data.pendingGrading > 0
+      data.pending_grading > 0
         ? { text: 'Action Needed', variant: 'warning' as BadgeVariant }
         : undefined,
   },
@@ -59,7 +60,7 @@ const DEFAULT_STATISTICS_CONFIG: StatisticConfig[] = [
     title: 'Avg Class Score',
     icon: 'analytics',
     iconColor: 'purple',
-    getValue: (data) => data.averageClassScore,
+    getValue: (data) => Math.round(data.average_score),
     getBadge: () => ({ text: 'This Week', variant: 'neutral' as BadgeVariant }),
     isPercentage: true,
   },
@@ -76,24 +77,37 @@ const EXTENDED_STATISTICS_CONFIG: StatisticConfig[] = [
     title: 'Active Classes',
     icon: 'school',
     iconColor: 'green',
-    getValue: (data) => data.activeClasses,
+    getValue: (data) => data.total_classes,
   },
   {
     id: 'total-students',
     title: 'Total Students',
     icon: 'groups',
     iconColor: 'blue',
-    getValue: (data) => data.totalStudents,
+    getValue: (data) => data.total_students,
   },
   {
-    id: 'completion-rate',
-    title: 'Completion Rate',
+    id: 'submission-rate',
+    title: 'Submission Rate',
     icon: 'check_circle',
     iconColor: 'green',
-    getValue: (data) => data.averageCompletionRate,
+    getValue: (data) => Math.round(data.submission_rate),
     isPercentage: true,
   },
 ]
+
+/**
+ * Determine if mock mode should be used based on environment
+ * Production builds should never use mock data by default
+ */
+const shouldUseMockByDefault = (): boolean => {
+  // In production, always use real API
+  if (import.meta.env.PROD) {
+    return false
+  }
+  // In development, use mock unless VITE_USE_REAL_API is set
+  return import.meta.env.VITE_USE_REAL_API !== 'true'
+}
 
 /**
  * Hook options
@@ -105,7 +119,7 @@ interface UseTeacherStatisticsOptions {
   autoFetch?: boolean
   /** Refresh interval in milliseconds (0 = disabled) */
   refreshInterval?: number
-  /** Use mock data (default: true until backend is ready) */
+  /** Use mock data (default: false in production, true in development unless VITE_USE_REAL_API=true) */
   useMock?: boolean
 }
 
@@ -155,7 +169,7 @@ const useTeacherStatistics = (
     extended = false,
     autoFetch = true,
     refreshInterval = 0,
-    useMock = true,
+    useMock = shouldUseMockByDefault(),
   } = options
 
   const [rawData, setRawData] = useState<TeacherStatistics | null>(null)
