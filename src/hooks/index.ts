@@ -5,3 +5,4 @@
  */
 
 export { default as useTeacherStatistics } from './useTeacherStatistics'
+export { default as useTeacherAssignments } from './useTeacherAssignments'
