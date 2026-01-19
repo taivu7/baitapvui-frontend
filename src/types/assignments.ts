@@ -67,6 +67,17 @@ export interface AssignmentStatusBadgeProps {
 }
 
 /**
+ * Submission progress data for display in AssignmentCard
+ * Subset of SubmissionProgressDisplayData from submissionProgress.ts
+ */
+export interface AssignmentSubmissionProgressData {
+  /** Number of students who have submitted */
+  submittedCount: number
+  /** Total number of students assigned */
+  totalStudents: number
+}
+
+/**
  * Props for the AssignmentCard component
  */
 export interface AssignmentCardProps {
@@ -76,7 +87,19 @@ export interface AssignmentCardProps {
   isLoading?: boolean
   /** Optional additional CSS classes */
   className?: string
+  /** Optional submission progress data for displaying progress bar */
+  submissionProgress?: AssignmentSubmissionProgressData
+  /** Whether to show submission progress bar (default: true if progress data provided) */
+  showProgress?: boolean
 }
+
+/**
+ * Function type for getting submission progress by assignment ID
+ * Used to look up progress data from the submission progress map
+ */
+export type GetSubmissionProgressFn = (
+  assignmentId: number
+) => AssignmentSubmissionProgressData | undefined
 
 /**
  * Props for the AssignmentsList component
@@ -96,6 +119,10 @@ export interface AssignmentsListProps {
   title?: string
   /** Optional additional CSS classes */
   className?: string
+  /** Function to get submission progress for an assignment (KAN-43) */
+  getSubmissionProgress?: GetSubmissionProgressFn
+  /** Whether to show submission progress bars (default: true) */
+  showProgress?: boolean
 }
 
 /**

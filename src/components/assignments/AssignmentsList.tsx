@@ -3,11 +3,12 @@
  *
  * Container component that renders a list of assignment cards.
  * Handles loading states, empty states, and error states.
+ * Supports displaying submission progress bars (KAN-43).
  */
 
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 import AssignmentCard, { AssignmentCardSkeleton } from './AssignmentCard'
-import { AssignmentsListProps } from '../../types/assignments'
+import { AssignmentsListProps, AssignmentSubmissionProgressData } from '../../types/assignments'
 
 /**
  * Error state component for assignments loading failure
@@ -64,11 +65,14 @@ const AssignmentsListEmpty: React.FC = () => {
 /**
  * Loading skeleton component for the assignments list
  */
-const AssignmentsListSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => {
+const AssignmentsListSkeleton: React.FC<{
+  count?: number
+  showProgress?: boolean
+}> = ({ count = 3, showProgress = false }) => {
   return (
     <div className="flex flex-col gap-4" aria-label="Loading assignments" aria-busy="true">
       {Array.from({ length: count }).map((_, index) => (
-        <AssignmentCardSkeleton key={`skeleton-${index}`} />
+        <AssignmentCardSkeleton key={`skeleton-${index}`} showProgress={showProgress} />
       ))}
     </div>
   )
@@ -108,7 +112,21 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
   viewAllHref = '#',
   title = 'Current Assignments',
   className = '',
+  getSubmissionProgress,
+  showProgress = true,
 }) => {
+  /**
+   * Gets submission progress data for a specific assignment
+   * Returns undefined if no progress data is available
+   */
+  const getProgressForAssignment = useCallback(
+    (assignmentId: number): AssignmentSubmissionProgressData | undefined => {
+      if (!getSubmissionProgress) return undefined
+      return getSubmissionProgress(assignmentId)
+    },
+    [getSubmissionProgress]
+  )
+
   // Render loading skeletons
   if (isLoading) {
     return (
@@ -120,7 +138,7 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
         </div>
 
         {/* Skeleton Cards */}
-        <AssignmentsListSkeleton count={3} />
+        <AssignmentsListSkeleton count={3} showProgress={showProgress} />
       </section>
     )
   }
@@ -172,7 +190,12 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
       {/* Assignment Cards */}
       <div className="flex flex-col gap-4">
         {assignments.map((assignment) => (
-          <AssignmentCard key={assignment.id} assignment={assignment} />
+          <AssignmentCard
+            key={assignment.id}
+            assignment={assignment}
+            submissionProgress={getProgressForAssignment(assignment.id)}
+            showProgress={showProgress}
+          />
         ))}
       </div>
     </section>

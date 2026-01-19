@@ -4,7 +4,7 @@
  * Main dashboard page for teachers displaying:
  * - Personalized greeting section
  * - Overview statistics cards (KAN-34)
- * - Current assignments list (KAN-40)
+ * - Current assignments list with submission progress (KAN-40, KAN-43)
  * - Recent activity feed
  * - Teacher tips
  */
@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { GreetingSection, OverviewStatistics } from '../components/dashboard'
 import { AssignmentsList } from '../components/assignments'
-import { useTeacherStatistics, useTeacherAssignments } from '../hooks'
+import { useTeacherStatistics, useTeacherAssignments, useSubmissionProgress } from '../hooks'
 
 const TeacherDashboard: React.FC = () => {
   const { user } = useAuth()
@@ -30,6 +30,12 @@ const TeacherDashboard: React.FC = () => {
     error: assignmentsError,
     refetch: refetchAssignments,
   } = useTeacherAssignments({ limit: 5 })
+
+  // Fetch submission progress data for assignments (KAN-43)
+  const {
+    getProgress,
+    isLoading: progressLoading,
+  } = useSubmissionProgress()
 
   // Handler for creating new assignment
   const handleCreateAssignment = useCallback(() => {
@@ -117,15 +123,17 @@ const TeacherDashboard: React.FC = () => {
 
         {/* Main Content Grid: Assignments & Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Current Assignments Section (2/3 width) - KAN-40 */}
+          {/* Current Assignments Section (2/3 width) - KAN-40, KAN-43 */}
           <div className="lg:col-span-2">
             <AssignmentsList
               assignments={assignments}
-              isLoading={assignmentsLoading}
+              isLoading={assignmentsLoading || progressLoading}
               error={assignmentsError}
               onRetry={refetchAssignments}
               viewAllHref="/teacher/assignments"
               title="Current Assignments"
+              getSubmissionProgress={getProgress}
+              showProgress={true}
             />
           </div>
 
