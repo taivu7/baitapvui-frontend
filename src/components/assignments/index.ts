@@ -12,3 +12,7 @@ export {
   AssignmentsListEmpty,
   AssignmentsListSkeleton,
 } from './AssignmentsList'
+export {
+  default as SubmissionProgressBar,
+  SubmissionProgressBarSkeleton,
+} from './SubmissionProgressBar'

@@ -2,12 +2,14 @@
  * AssignmentCard Component
  *
  * A card component for displaying individual assignment information
- * on the Teacher Dashboard. Supports loading skeleton state.
+ * on the Teacher Dashboard. Supports loading skeleton state and
+ * submission progress bar (KAN-43).
  */
 
 import React, { memo, useMemo } from 'react'
 import { AssignmentCardProps, AssignmentStatus } from '../../types/assignments'
 import AssignmentStatusBadge from './AssignmentStatusBadge'
+import SubmissionProgressBar from './SubmissionProgressBar'
 
 /**
  * Maps assignment status to icon configuration
@@ -111,7 +113,10 @@ const formatTime = (timeStr: string): string => {
 /**
  * Skeleton loading component for the assignment card
  */
-const AssignmentCardSkeleton: React.FC<{ className?: string }> = ({ className = '' }) => {
+const AssignmentCardSkeleton: React.FC<{
+  className?: string
+  showProgress?: boolean
+}> = ({ className = '', showProgress = false }) => {
   return (
     <article
       className={`
@@ -142,8 +147,18 @@ const AssignmentCardSkeleton: React.FC<{ className?: string }> = ({ className = 
         <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full" />
       </div>
 
+      {/* Submission progress skeleton (KAN-43) */}
+      {showProgress && (
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="h-3 w-28 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+          <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full" />
+        </div>
+      )}
+
       {/* Questions count skeleton */}
-      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+      <div className={`mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 ${showProgress ? 'mt-3' : ''}`}>
         <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
       </div>
     </article>
@@ -159,6 +174,7 @@ const AssignmentCardSkeleton: React.FC<{ className?: string }> = ({ className = 
  * - Assigned class name
  * - Due date and time
  * - Status badge
+ * - Submission progress bar (KAN-43)
  * - Question count
  *
  * @param props - AssignmentCardProps
@@ -178,6 +194,7 @@ const AssignmentCardSkeleton: React.FC<{ className?: string }> = ({ className = 
  *     created_at: '2026-01-15T08:00:00Z',
  *     updated_at: '2026-01-16T10:30:00Z',
  *   }}
+ *   submissionProgress={{ submittedCount: 18, totalStudents: 25 }}
  * />
  * ```
  */
@@ -185,10 +202,12 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({
   assignment,
   isLoading = false,
   className = '',
+  submissionProgress,
+  showProgress = true,
 }) => {
   // Show skeleton while loading
   if (isLoading) {
-    return <AssignmentCardSkeleton className={className} />
+    return <AssignmentCardSkeleton className={className} showProgress={showProgress} />
   }
 
   const { title, assigned_class, due_date, due_time, status, question_count } = assignment
@@ -204,6 +223,14 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({
 
   // Determine if the assignment is overdue
   const isOverdue = formattedDueDate === 'Overdue' && status === 'published'
+
+  // Determine if we should show the progress bar
+  // Only show for published or closed assignments with progress data
+  const shouldShowProgress =
+    showProgress &&
+    submissionProgress &&
+    submissionProgress.totalStudents > 0 &&
+    (status === 'published' || status === 'closed')
 
   return (
     <article
@@ -285,8 +312,19 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({
         <AssignmentStatusBadge status={status} />
       </div>
 
+      {/* Submission Progress Bar (KAN-43) */}
+      {shouldShowProgress && (
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <SubmissionProgressBar
+            submittedCount={submissionProgress.submittedCount}
+            totalStudents={submissionProgress.totalStudents}
+            size="sm"
+          />
+        </div>
+      )}
+
       {/* Footer: Questions Count */}
-      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
+      <div className={`mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2 ${shouldShowProgress ? 'mt-3' : ''}`}>
         <span
           className="material-symbols-outlined text-gray-400 dark:text-gray-500"
           style={{ fontSize: '16px' }}
