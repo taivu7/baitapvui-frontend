@@ -5,14 +5,14 @@
  * - Personalized greeting section
  * - Overview statistics cards (KAN-34)
  * - Current assignments list with submission progress (KAN-40, KAN-43)
- * - Recent activity feed
+ * - Recent activity feed (KAN-46)
  * - Teacher tips
  */
 
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { GreetingSection, OverviewStatistics } from '../components/dashboard'
+import { GreetingSection, OverviewStatistics, RecentActivityFeed } from '../components/dashboard'
 import { AssignmentsList } from '../components/assignments'
 import { useTeacherStatistics, useTeacherAssignments, useSubmissionProgress } from '../hooks'
 
@@ -63,43 +63,6 @@ const TeacherDashboard: React.FC = () => {
     [navigate]
   )
 
-  // Mock data for recent activities (to be replaced with real data in future)
-  const mockActivities = [
-    {
-      id: 1,
-      studentName: 'Minh Tuan',
-      action: 'submitted',
-      target: 'Math Homework',
-      time: '2 mins ago',
-      hasAvatar: true,
-    },
-    {
-      id: 2,
-      studentName: 'Linh Chi',
-      action: 'asked a question in',
-      target: 'Class 9B',
-      time: '15 mins ago',
-      hasAvatar: true,
-    },
-    {
-      id: 3,
-      studentName: 'System',
-      action: 'Class 5A average score updated',
-      target: '',
-      time: '1 hour ago',
-      hasAvatar: false,
-      isSystem: true,
-    },
-    {
-      id: 4,
-      studentName: 'Bao Nam',
-      action: 'joined',
-      target: 'Physics 101',
-      time: '2 hours ago',
-      hasAvatar: true,
-    },
-  ]
-
   return (
     <main className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-6 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -139,41 +102,8 @@ const TeacherDashboard: React.FC = () => {
 
           {/* Recent Activity & Teacher Tip Section (1/3 width) */}
           <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-[#111813] dark:text-white">Recent Activity</h3>
-            </div>
-
-            {/* Activity Feed */}
-            <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col divide-y divide-gray-100 dark:divide-gray-800">
-              {mockActivities.map((activity, index) => (
-                <div key={activity.id} className={`flex gap-3 py-3 ${index === 0 ? 'pt-0' : ''} ${index === mockActivities.length - 1 ? 'pb-0' : ''}`}>
-                  {activity.isSystem ? (
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-full size-10 shrink-0 flex items-center justify-center text-gray-500">
-                      <span className="material-symbols-outlined text-sm">school</span>
-                    </div>
-                  ) : (
-                    <div className="bg-primary/20 rounded-full size-10 shrink-0 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined text-sm">person</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {activity.isSystem ? (
-                        <>
-                          System: <span className="font-medium">{activity.action}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-bold">{activity.studentName}</span> {activity.action}{' '}
-                          {activity.target && <span className="font-medium text-primary">{activity.target}</span>}
-                        </>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Recent Activity Feed (KAN-46) */}
+            <RecentActivityFeed limit={5} />
 
             {/* Teacher Tip Card */}
             <div className="bg-gradient-to-br from-primary/20 to-green-200/20 dark:from-primary/10 dark:to-green-900/20 p-5 rounded-2xl border border-primary/20 flex flex-col items-center text-center gap-3">

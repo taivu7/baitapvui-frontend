@@ -7,3 +7,4 @@
 export { default as GreetingSection } from './GreetingSection'
 export { default as StatisticsCard, StatisticsCardSkeleton } from './StatisticsCard'
 export { default as OverviewStatistics, ErrorState, EmptyState } from './OverviewStatistics'
+export { default as RecentActivityFeed, ActivityFeedSkeleton } from './RecentActivityFeed'
