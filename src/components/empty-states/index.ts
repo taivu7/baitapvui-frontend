@@ -15,6 +15,8 @@ export { default as EmptyState } from './EmptyState'
 export { default as TeacherEmptyClasses } from './TeacherEmptyClasses'
 export { default as TeacherEmptyAssignments } from './TeacherEmptyAssignments'
 export { default as TeacherEmptySubmissions } from './TeacherEmptySubmissions'
+export { default as TeacherEmptyCurrentAssignments } from './TeacherEmptyCurrentAssignments'
+export { default as TeacherEmptyRecentActivity } from './TeacherEmptyRecentActivity'
 
 // Student-specific empty states
 export { default as StudentEmptyClasses } from './StudentEmptyClasses'

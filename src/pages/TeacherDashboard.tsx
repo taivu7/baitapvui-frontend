@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext'
 import { GreetingSection, OverviewStatistics } from '../components/dashboard'
 import { AssignmentsList } from '../components/assignments'
 import { SearchInput } from '../components/search'
+import { TeacherEmptyCurrentAssignments, TeacherEmptyRecentActivity } from '../components/empty-states'
 import { useTeacherStatistics, useTeacherAssignments, useSubmissionProgress, useSearch } from '../hooks'
 import { SearchResultItem } from '../types/search'
 
@@ -66,6 +67,11 @@ const TeacherDashboard: React.FC = () => {
   // Handler for creating new assignment
   const handleCreateAssignment = useCallback(() => {
     navigate('/teacher/assignments/new')
+  }, [navigate])
+
+  // Handler for inviting students (KAN-53)
+  const handleInviteStudents = useCallback(() => {
+    navigate('/teacher/classes')
   }, [navigate])
 
   // Handler for statistics card clicks (optional navigation)
@@ -168,7 +174,7 @@ const TeacherDashboard: React.FC = () => {
 
         {/* Main Content Grid: Assignments & Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Current Assignments Section (2/3 width) - KAN-40, KAN-43 */}
+          {/* Current Assignments Section (2/3 width) - KAN-40, KAN-43, KAN-53 */}
           <div className="lg:col-span-2">
             <AssignmentsList
               assignments={assignments}
@@ -179,46 +185,57 @@ const TeacherDashboard: React.FC = () => {
               title="Current Assignments"
               getSubmissionProgress={getProgress}
               showProgress={true}
+              onEmptyAction={handleCreateAssignment}
+              emptyStateComponent={
+                <TeacherEmptyCurrentAssignments onAction={handleCreateAssignment} />
+              }
             />
           </div>
 
-          {/* Recent Activity & Teacher Tip Section (1/3 width) */}
+          {/* Recent Activity & Teacher Tip Section (1/3 width) - KAN-53 */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-[#111813] dark:text-white">Recent Activity</h3>
             </div>
 
-            {/* Activity Feed */}
-            <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col divide-y divide-gray-100 dark:divide-gray-800">
-              {mockActivities.map((activity, index) => (
-                <div key={activity.id} className={`flex gap-3 py-3 ${index === 0 ? 'pt-0' : ''} ${index === mockActivities.length - 1 ? 'pb-0' : ''}`}>
-                  {activity.isSystem ? (
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-full size-10 shrink-0 flex items-center justify-center text-gray-500">
-                      <span className="material-symbols-outlined text-sm">school</span>
+            {/* Activity Feed - Shows empty state when no activities (KAN-53) */}
+            {mockActivities.length === 0 ? (
+              <TeacherEmptyRecentActivity
+                onAction={handleCreateAssignment}
+                onSecondaryAction={handleInviteStudents}
+              />
+            ) : (
+              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col divide-y divide-gray-100 dark:divide-gray-800">
+                {mockActivities.map((activity, index) => (
+                  <div key={activity.id} className={`flex gap-3 py-3 ${index === 0 ? 'pt-0' : ''} ${index === mockActivities.length - 1 ? 'pb-0' : ''}`}>
+                    {activity.isSystem ? (
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-full size-10 shrink-0 flex items-center justify-center text-gray-500">
+                        <span className="material-symbols-outlined text-sm">school</span>
+                      </div>
+                    ) : (
+                      <div className="bg-primary/20 rounded-full size-10 shrink-0 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined text-sm">person</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {activity.isSystem ? (
+                          <>
+                            System: <span className="font-medium">{activity.action}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-bold">{activity.studentName}</span> {activity.action}{' '}
+                            {activity.target && <span className="font-medium text-primary">{activity.target}</span>}
+                          </>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
                     </div>
-                  ) : (
-                    <div className="bg-primary/20 rounded-full size-10 shrink-0 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined text-sm">person</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {activity.isSystem ? (
-                        <>
-                          System: <span className="font-medium">{activity.action}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-bold">{activity.studentName}</span> {activity.action}{' '}
-                          {activity.target && <span className="font-medium text-primary">{activity.target}</span>}
-                        </>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Teacher Tip Card */}
             <div className="bg-gradient-to-br from-primary/20 to-green-200/20 dark:from-primary/10 dark:to-green-900/20 p-5 rounded-2xl border border-primary/20 flex flex-col items-center text-center gap-3">

@@ -45,8 +45,13 @@ const AssignmentsListError: React.FC<ErrorStateProps> = ({ message, onRetry }) =
 
 /**
  * Empty state component when no assignments are available
+ * Supports an optional action callback for CTA functionality (KAN-53)
  */
-const AssignmentsListEmpty: React.FC = () => {
+interface EmptyStateProps {
+  onAction?: () => void
+}
+
+const AssignmentsListEmpty: React.FC<EmptyStateProps> = ({ onAction }) => {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 bg-surface-light dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800">
       <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 mb-4">
@@ -55,9 +60,22 @@ const AssignmentsListEmpty: React.FC = () => {
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
         No Assignments Yet
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md">
+      <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md mb-4">
         Your assignments will appear here once you create them. Start by clicking "Create Assignment" to add your first one.
       </p>
+      {onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="flex items-center justify-center gap-2 rounded-lg py-2.5 px-4 text-sm font-bold transition-all active:scale-[0.98] bg-primary text-[#111813] shadow-[0_4px_14px_0_rgba(19,236,91,0.39)] hover:bg-primary/90"
+          aria-label="Create your first assignment"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }} aria-hidden="true">
+            add
+          </span>
+          Create your first assignment
+        </button>
+      )}
     </div>
   )
 }
@@ -114,6 +132,8 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
   className = '',
   getSubmissionProgress,
   showProgress = true,
+  onEmptyAction,
+  emptyStateComponent,
 }) => {
   /**
    * Gets submission progress data for a specific assignment
@@ -167,8 +187,8 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
           <h3 className="text-xl font-bold text-[#111813] dark:text-white">{title}</h3>
         </div>
 
-        {/* Empty State */}
-        <AssignmentsListEmpty />
+        {/* Empty State - Custom component takes priority, then default with CTA (KAN-53) */}
+        {emptyStateComponent || <AssignmentsListEmpty onAction={onEmptyAction} />}
       </section>
     )
   }

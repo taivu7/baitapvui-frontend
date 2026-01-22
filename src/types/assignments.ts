@@ -123,6 +123,10 @@ export interface AssignmentsListProps {
   getSubmissionProgress?: GetSubmissionProgressFn
   /** Whether to show submission progress bars (default: true) */
   showProgress?: boolean
+  /** Callback when empty state CTA is clicked (KAN-53) */
+  onEmptyAction?: () => void
+  /** Custom empty state component to render (KAN-53) */
+  emptyStateComponent?: React.ReactNode
 }
 
 /**
