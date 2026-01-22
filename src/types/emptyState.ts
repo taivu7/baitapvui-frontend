@@ -94,6 +94,8 @@ export type EmptyStateVariant =
   | 'teacher-no-classes'
   | 'teacher-no-assignments'
   | 'teacher-no-submissions'
+  | 'teacher-no-current-assignments'
+  | 'teacher-no-recent-activity'
   | 'student-no-classes'
   | 'student-no-assignments'
   | 'student-no-due-dates'
