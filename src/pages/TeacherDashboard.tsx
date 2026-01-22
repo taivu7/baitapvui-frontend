@@ -3,6 +3,7 @@
  *
  * Main dashboard page for teachers displaying:
  * - Personalized greeting section
+ * - Global search input (KAN-49)
  * - Overview statistics cards (KAN-34)
  * - Current assignments list with submission progress (KAN-40, KAN-43)
  * - Recent activity feed
@@ -14,7 +15,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { GreetingSection, OverviewStatistics } from '../components/dashboard'
 import { AssignmentsList } from '../components/assignments'
-import { useTeacherStatistics, useTeacherAssignments, useSubmissionProgress } from '../hooks'
+import { SearchInput } from '../components/search'
+import { useTeacherStatistics, useTeacherAssignments, useSubmissionProgress, useSearch } from '../hooks'
+import { SearchResultItem } from '../types/search'
 
 const TeacherDashboard: React.FC = () => {
   const { user } = useAuth()
@@ -36,6 +39,29 @@ const TeacherDashboard: React.FC = () => {
     getProgress,
     isLoading: progressLoading,
   } = useSubmissionProgress()
+
+  // Global search state and handlers (KAN-49)
+  const {
+    query: searchQuery,
+    results: searchResults,
+    isLoading: searchLoading,
+    error: searchError,
+    setQuery: setSearchQuery,
+    clearSearch,
+  } = useSearch({ debounceDelay: 300, minCharacters: 2, limit: 8 })
+
+  // Handler for search input changes (KAN-49)
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value)
+  }, [setSearchQuery])
+
+  // Handler for search result selection (KAN-49)
+  const handleSearchResultSelect = useCallback((result: SearchResultItem) => {
+    if (result.href) {
+      navigate(result.href)
+    }
+    clearSearch()
+  }, [navigate, clearSearch])
 
   // Handler for creating new assignment
   const handleCreateAssignment = useCallback(() => {
@@ -110,6 +136,25 @@ const TeacherDashboard: React.FC = () => {
           role={user?.role || 'teacher'}
           onCreateAssignment={handleCreateAssignment}
         />
+
+        {/* Global Search Section (KAN-49) */}
+        <section aria-label="Global Search" className="w-full max-w-2xl">
+          <SearchInput
+            placeholder="Search classes, assignments, or students..."
+            onChange={handleSearchChange}
+            onResultSelect={handleSearchResultSelect}
+            onClear={clearSearch}
+            isLoading={searchLoading}
+            error={searchError}
+            results={searchResults}
+            showResults={searchQuery.length >= 2}
+            size="lg"
+            debounceDelay={300}
+            minCharacters={2}
+            ariaLabel="Search classes, assignments, or students"
+            id="teacher-dashboard-search"
+          />
+        </section>
 
         {/* Overview Statistics Section (KAN-34) */}
         <OverviewStatistics
