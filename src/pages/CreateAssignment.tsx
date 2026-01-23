@@ -1,63 +1,319 @@
 /**
- * CreateAssignment Page (Placeholder)
+ * CreateAssignment Page
  *
- * Placeholder page for the assignment creation workflow.
- * This page will be fully implemented in a future ticket.
+ * Assignment creation page for teachers.
+ * Implements KAN-65, KAN-66, KAN-67 for basic info, settings, and state persistence.
  *
- * Features to be implemented:
- * - Assignment title and description form
- * - Question bank integration
- * - Class selection
- * - Due date and time settings
- * - Save draft / Publish functionality
+ * Features:
+ * - Assignment basic info form (title, description)
+ * - Assignment settings panel (class, due date, visibility, attempts)
+ * - State persistence across navigation and page refresh
+ * - Save draft and publish functionality
+ * - Form validation before submission
  */
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Button from '../components/ui/Button'
+import { AssignmentBasicInfoForm, AssignmentSettingsPanel } from '../components/assignments'
+import {
+  AssignmentCreationProvider,
+  useAssignmentCreation,
+} from '../context/AssignmentCreationContext'
+import { useAssignmentFormValidation } from '../hooks'
 
-const CreateAssignment: React.FC = () => {
+/**
+ * Inner component that uses the AssignmentCreationContext
+ */
+const CreateAssignmentContent: React.FC = () => {
   const navigate = useNavigate()
+  const { formData, isDirty, resetForm } = useAssignmentCreation()
+  const { isValidForDraft, isValidForPublish, validateForDraft, validateForPublish } =
+    useAssignmentFormValidation(formData)
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Handle back navigation
   const handleGoBack = useCallback(() => {
+    if (isDirty) {
+      // Show confirmation if there are unsaved changes
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave?'
+      )
+      if (!confirmed) return
+    }
     navigate('/teacher/dashboard')
-  }, [navigate])
+  }, [navigate, isDirty])
+
+  // Handle save draft
+  const handleSaveDraft = useCallback(async () => {
+    setSubmitError(null)
+    const validation = validateForDraft()
+
+    if (!validation.isValid) {
+      setSubmitError('Please fix the errors before saving.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // TODO: Replace with actual API call
+      // await assignmentsService.saveDraft(formData)
+      console.log('Saving draft:', formData)
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Clear storage and navigate back on success
+      resetForm()
+      navigate('/teacher/dashboard', {
+        state: { message: 'Assignment draft saved successfully!' },
+      })
+    } catch (error) {
+      console.error('Failed to save draft:', error)
+      setSubmitError('Failed to save draft. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [formData, validateForDraft, resetForm, navigate])
+
+  // Handle publish
+  const handlePublish = useCallback(async () => {
+    setSubmitError(null)
+    const validation = validateForPublish()
+
+    if (!validation.isValid) {
+      const errorMessages = Object.values(validation.errors).filter(Boolean)
+      setSubmitError(errorMessages.join('. ') || 'Please fix the errors before publishing.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // TODO: Replace with actual API call
+      // await assignmentsService.publish(formData)
+      console.log('Publishing assignment:', formData)
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Clear storage and navigate back on success
+      resetForm()
+      navigate('/teacher/dashboard', {
+        state: { message: 'Assignment published successfully!' },
+      })
+    } catch (error) {
+      console.error('Failed to publish assignment:', error)
+      setSubmitError('Failed to publish assignment. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [formData, validateForPublish, resetForm, navigate])
+
+  // Handle discard
+  const handleDiscard = useCallback(() => {
+    if (isDirty) {
+      const confirmed = window.confirm(
+        'Are you sure you want to discard all changes? This cannot be undone.'
+      )
+      if (!confirmed) return
+    }
+    resetForm()
+    navigate('/teacher/dashboard')
+  }, [isDirty, resetForm, navigate])
+
+  // Summary of current settings for the action bar
+  const settingsSummary = useMemo(() => {
+    const parts: string[] = []
+    if (formData.settings.classId) {
+      parts.push('Class selected')
+    }
+    if (formData.settings.dueDate) {
+      parts.push(`Due: ${formData.settings.dueDate}`)
+    }
+    return parts.join(' | ') || 'No settings configured'
+  }, [formData.settings])
 
   return (
     <main className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-6 lg:p-10">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Back Button and Page Header */}
         <div className="mb-8">
           <button
             onClick={handleGoBack}
             className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors mb-4"
+            aria-label="Go back to dashboard"
           >
             <span className="material-symbols-outlined text-xl">arrow_back</span>
             <span className="text-sm font-medium">Back to Dashboard</span>
           </button>
 
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Create Assignment
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Create a new assignment for your students.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Create Assignment
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Create a new assignment for your students.
+              </p>
+            </div>
+
+            {/* Status Indicator */}
+            {isDirty && (
+              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                <span className="material-symbols-outlined text-lg">edit</span>
+                <span>Unsaved changes</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Placeholder Content */}
-        <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800 p-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
-            <span className="material-symbols-outlined text-3xl">assignment_add</span>
+        {/* Error Message */}
+        {submitError && (
+          <div
+            className="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200 flex items-center gap-3"
+            role="alert"
+          >
+            <span className="material-symbols-outlined text-red-500">error</span>
+            <span>{submitError}</span>
+            <button
+              onClick={() => setSubmitError(null)}
+              className="ml-auto text-red-500 hover:text-red-700"
+              aria-label="Dismiss error"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Assignment Creation Coming Soon
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            This feature is currently under development. You will be able to create assignments,
-            add questions, and assign them to your classes here.
-          </p>
+        )}
+
+        {/* Form Sections */}
+        <div className="space-y-6">
+          {/* Basic Info Form */}
+          <AssignmentBasicInfoForm isSubmitting={isSubmitting} />
+
+          {/* Settings Panel */}
+          <AssignmentSettingsPanel isLoading={isSubmitting} />
+
+          {/* Questions Section Placeholder */}
+          <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-primary">quiz</span>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Questions
+              </h2>
+            </div>
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 mb-4">
+                <span className="material-symbols-outlined text-3xl">add_circle</span>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Question creation will be available in a future update.
+              </p>
+              <Button variant="secondary" disabled>
+                <span className="material-symbols-outlined text-lg">add</span>
+                Add Questions (Coming Soon)
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="sticky bottom-0 left-0 right-0 mt-8 -mx-6 lg:-mx-10 px-6 lg:px-10 py-4 bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 shadow-lg">
+          <div className="max-w-4xl mx-auto">
+            {/* Settings Summary */}
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">info</span>
+              {settingsSummary}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              {/* Left side: Discard */}
+              <Button
+                variant="outline"
+                onClick={handleDiscard}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto order-3 sm:order-1"
+              >
+                <span className="material-symbols-outlined text-lg">delete</span>
+                Discard
+              </Button>
+
+              {/* Right side: Save Draft and Publish */}
+              <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto order-1 sm:order-2">
+                <Button
+                  variant="secondary"
+                  onClick={handleSaveDraft}
+                  disabled={isSubmitting || !isValidForDraft}
+                  className="flex-1 sm:flex-none"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="material-symbols-outlined text-lg animate-spin">
+                        progress_activity
+                      </span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg">save</span>
+                      Save Draft
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  variant="primary"
+                  onClick={handlePublish}
+                  disabled={isSubmitting || !isValidForPublish}
+                  className="flex-1 sm:flex-none"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="material-symbols-outlined text-lg animate-spin">
+                        progress_activity
+                      </span>
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg">publish</span>
+                      Publish
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Validation Hints */}
+            {!isValidForPublish && formData.title.trim() && (
+              <div className="mt-3 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">warning</span>
+                <span>
+                  {!formData.settings.classId
+                    ? 'Select a class to publish this assignment'
+                    : 'Complete all required fields to publish'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </main>
+  )
+}
+
+/**
+ * CreateAssignment page wrapper with context provider
+ */
+const CreateAssignment: React.FC = () => {
+  return (
+    <AssignmentCreationProvider>
+      <CreateAssignmentContent />
+    </AssignmentCreationProvider>
   )
 }
 
