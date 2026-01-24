@@ -53,6 +53,14 @@ export class QuestionApiError extends Error {
   isValidationError(): boolean {
     return this.code === 'VALIDATION_ERROR'
   }
+
+  isPermissionError(): boolean {
+    return this.statusCode === 403 || this.code === 'PERMISSION_DENIED' || this.code === 'FORBIDDEN'
+  }
+
+  isNotFoundError(): boolean {
+    return this.statusCode === 404 || this.code === 'NOT_FOUND'
+  }
 }
 
 /**
@@ -62,6 +70,36 @@ function parseApiError(error: unknown): QuestionApiError {
   if (error instanceof AxiosError) {
     const statusCode = error.response?.status
     const data = error.response?.data as ApiErrorResponse | undefined
+
+    // Handle permission errors specifically
+    if (statusCode === 403) {
+      return new QuestionApiError(
+        data?.message || 'Permission denied. You do not have access to this resource.',
+        data?.code || 'PERMISSION_DENIED',
+        data?.errors || [],
+        statusCode
+      )
+    }
+
+    // Handle not found errors
+    if (statusCode === 404) {
+      return new QuestionApiError(
+        data?.message || 'The requested resource was not found.',
+        data?.code || 'NOT_FOUND',
+        data?.errors || [],
+        statusCode
+      )
+    }
+
+    // Handle unauthorized errors
+    if (statusCode === 401) {
+      return new QuestionApiError(
+        data?.message || 'Authentication required. Please log in again.',
+        data?.code || 'UNAUTHORIZED',
+        data?.errors || [],
+        statusCode
+      )
+    }
 
     if (data) {
       return new QuestionApiError(

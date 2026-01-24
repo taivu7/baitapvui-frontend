@@ -5,15 +5,21 @@
  *
  * Main editor component for creating and editing questions.
  * Includes content editor, type toggle, options management, and media attachments.
+ * Now includes real-time validation feedback.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { QuestionEditorProps } from '../types'
 import { useQuestionBuilder } from '../context'
+import { useQuestionValidation } from '../hooks/useQuestionValidation'
+import useDebounce from '../../../hooks/useDebounce'
 import QuestionTypeToggle from './QuestionTypeToggle'
 import MultipleChoiceOptions from './MultipleChoiceOptions'
 import MediaAttachmentToolbar from './MediaAttachmentToolbar'
 import Textarea from '../../../components/ui/Textarea'
+
+// Debounce delay for content updates (ms)
+const CONTENT_DEBOUNCE_DELAY = 300
 
 const QuestionEditor: React.FC<QuestionEditorProps> = ({
   question,
@@ -35,13 +41,41 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   const [isUploadingMedia, setIsUploadingMedia] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
+  // Local content state for debouncing
+  const [localContent, setLocalContent] = useState(question.content)
+  const debouncedContent = useDebounce(localContent, CONTENT_DEBOUNCE_DELAY)
+  const isInitialMount = useRef(true)
+
+  // Sync local content when question changes (e.g., switching questions)
+  useEffect(() => {
+    setLocalContent(question.content)
+  }, [question.id]) // Only reset when question ID changes
+
+  // Update context when debounced content changes
+  useEffect(() => {
+    // Skip initial mount to avoid unnecessary update
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+
+    // Only update if content actually changed
+    if (debouncedContent !== question.content) {
+      setQuestionContent(question.id, debouncedContent)
+    }
+  }, [debouncedContent, question.id, question.content, setQuestionContent])
+
+  // Real-time validation (use local content for immediate feedback)
+  const questionForValidation = { ...question, content: localContent }
+  const validation = useQuestionValidation(questionForValidation)
+
   const handleTypeChange = (type: 'multiple_choice' | 'essay') => {
     setQuestionType(question.id, type)
   }
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setQuestionContent(question.id, e.target.value)
-  }
+  const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalContent(e.target.value)
+  }, [])
 
   const handleUploadMedia = async (file: File) => {
     setIsUploadingMedia(true)
@@ -101,13 +135,13 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         </label>
         <Textarea
           id={`question-content-${question.id}`}
-          value={question.content}
+          value={localContent}
           onChange={handleContentChange}
           placeholder="Enter your question here..."
           rows={4}
           className="w-full"
         />
-        {!question.content.trim() && (
+        {!localContent.trim() && (
           <p className="text-xs text-red-500 dark:text-red-400 mt-1">
             Question content is required
           </p>
@@ -135,6 +169,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           onUpdateOption={(optionId, text) => updateOption(question.id, optionId, text)}
           onDeleteOption={(optionId) => deleteOption(question.id, optionId)}
           onSetCorrect={(optionId, isCorrect) => setCorrectOption(question.id, optionId, isCorrect)}
+          validationErrors={validation.errors}
         />
       )}
 
@@ -155,15 +190,25 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         </div>
       )}
 
-      {/* Save status indicator */}
-      {!question.isSaved && (
-        <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-            schedule
-          </span>
-          <span>Unsaved changes</span>
-        </div>
-      )}
+      {/* Status indicators */}
+      <div className="flex items-center gap-4">
+        {!question.isSaved && (
+          <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+              schedule
+            </span>
+            <span>Unsaved changes</span>
+          </div>
+        )}
+        {!validation.isValid && (
+          <div className="flex items-center gap-2 text-xs text-red-500 dark:text-red-400">
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+              error
+            </span>
+            <span>Please fix validation errors before saving</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

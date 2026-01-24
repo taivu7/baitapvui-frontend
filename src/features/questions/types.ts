@@ -85,6 +85,7 @@ export interface CreateQuestionRequest {
     text: string
     isCorrect: boolean
   }>
+  mediaIds?: string[]
 }
 
 /**
@@ -99,6 +100,7 @@ export interface UpdateQuestionRequest {
     text: string
     isCorrect: boolean
   }>
+  mediaIds?: string[]
 }
 
 /**

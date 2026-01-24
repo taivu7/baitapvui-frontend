@@ -31,7 +31,6 @@ import {
   DEFAULT_QUESTION_BUILDER_STATE,
   DEFAULT_DRAFT_QUESTION,
   QUESTION_BUILDER_STORAGE_KEY,
-  MediaAttachment,
 } from './types'
 import questionApi from './api'
 import { generateUUID } from './utils'
@@ -178,17 +177,22 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
       const question = state.questions.find((q) => q.id === questionId)
       if (!question) return
 
-      // If question is saved on backend, delete it
+      // If question is saved on backend, delete it first
       if (question.backendId) {
         try {
           await questionApi.deleteQuestion(question.backendId)
         } catch (error) {
           console.error('Failed to delete question from backend:', error)
+          // Set error state so user knows deletion failed
+          setState((prev) => ({
+            ...prev,
+            error: error instanceof Error ? error.message : 'Failed to delete question',
+          }))
           throw error
         }
       }
 
-      // Remove from local state
+      // Only remove from local state AFTER successful backend deletion
       setState((prev) => {
         const filtered = prev.questions.filter((q) => q.id !== questionId)
         // Reorder remaining questions
@@ -202,6 +206,7 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
               ? reordered[0]?.id || null
               : prev.currentQuestionId,
           isDirty: true,
+          error: null, // Clear any previous error
         }
       })
     },
@@ -437,6 +442,10 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
     // Validate file
     const validation = questionApi.validateMediaFile(file)
     if (!validation.valid) {
+      setState((prev) => ({
+        ...prev,
+        error: validation.error || 'Invalid file',
+      }))
       throw new Error(validation.error)
     }
 
@@ -455,9 +464,22 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
           }
         }),
         isDirty: true,
+        error: null,
       }))
     } catch (error) {
       console.error('Failed to upload media:', error)
+      // Handle permission errors specifically
+      const apiError = error as { isPermissionError?: () => boolean; message?: string }
+      const errorMessage =
+        apiError.isPermissionError?.()
+          ? 'Permission denied: You do not have access to upload media.'
+          : error instanceof Error
+            ? error.message
+            : 'Failed to upload media'
+      setState((prev) => ({
+        ...prev,
+        error: errorMessage,
+      }))
       throw error
     }
   }, [])
@@ -469,6 +491,7 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
     try {
       await questionApi.deleteMedia(mediaId)
 
+      // Only remove from local state AFTER successful backend deletion
       setState((prev) => ({
         ...prev,
         questions: prev.questions.map((q) => {
@@ -481,9 +504,22 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
           }
         }),
         isDirty: true,
+        error: null, // Clear any previous error
       }))
     } catch (error) {
       console.error('Failed to delete media:', error)
+      // Handle permission errors specifically
+      const apiError = error as { isPermissionError?: () => boolean; message?: string }
+      const errorMessage =
+        apiError.isPermissionError?.()
+          ? 'Permission denied: You cannot delete this media file.'
+          : error instanceof Error
+            ? error.message
+            : 'Failed to delete media'
+      setState((prev) => ({
+        ...prev,
+        error: errorMessage,
+      }))
       throw error
     }
   }, [])
@@ -524,6 +560,7 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
               text: opt.text,
               isCorrect: opt.isCorrect,
             })),
+            mediaIds: question.media.map((m) => m.id),
           })
         } else {
           // Create new question
@@ -535,6 +572,7 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
               text: opt.text,
               isCorrect: opt.isCorrect,
             })),
+            mediaIds: question.media.map((m) => m.id),
           })
 
           // Update with backend ID
