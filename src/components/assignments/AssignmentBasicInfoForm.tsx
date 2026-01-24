@@ -30,13 +30,22 @@ const DESCRIPTION_MAX_LENGTH = 5000
 const AssignmentBasicInfoForm: React.FC<AssignmentBasicInfoFormProps> = ({
   className = '',
   isSubmitting = false,
+  serverErrors = {},
 }) => {
   const { formData, setTitle, setDescription } = useAssignmentCreation()
-  const [errors, setErrors] = useState<AssignmentFormErrors>({})
+  const [localErrors, setLocalErrors] = useState<AssignmentFormErrors>({})
   const [touched, setTouched] = useState<{ title: boolean; description: boolean }>({
     title: false,
     description: false,
   })
+
+  // Merge local validation errors with server-side errors (server errors take priority)
+  const errors = useMemo(() => {
+    return {
+      ...localErrors,
+      ...serverErrors,
+    }
+  }, [localErrors, serverErrors])
 
   // Validate title
   const validateTitle = useCallback((value: string): string | undefined => {
@@ -61,7 +70,7 @@ const AssignmentBasicInfoForm: React.FC<AssignmentBasicInfoFormProps> = ({
     return undefined
   }, [])
 
-  // Update errors when form data changes and fields are touched
+  // Update local errors when form data changes and fields are touched
   useEffect(() => {
     const newErrors: AssignmentFormErrors = {}
 
@@ -75,7 +84,7 @@ const AssignmentBasicInfoForm: React.FC<AssignmentBasicInfoFormProps> = ({
       if (descError) newErrors.description = descError
     }
 
-    setErrors(newErrors)
+    setLocalErrors(newErrors)
   }, [formData.title, formData.description, touched, validateTitle, validateDescription])
 
   // Handle title change

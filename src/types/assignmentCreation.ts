@@ -2,13 +2,71 @@
  * Assignment Creation Types
  *
  * TypeScript types for the Assignment Creation workflow.
- * These types support Tasks KAN-65, KAN-66, and KAN-67.
+ * These types support Tasks KAN-65, KAN-66, KAN-67, and KAN-68.
  */
 
 /**
  * Assignment visibility/status options
  */
 export type AssignmentVisibility = 'draft' | 'published'
+
+// =============================================================================
+// API Request/Response Types (Backend Contract)
+// =============================================================================
+
+/**
+ * Backend API request for creating/updating a draft
+ */
+export interface DraftApiRequest {
+  title: string
+  description?: string
+  settings?: {
+    visibility: AssignmentVisibility
+    attempts?: number | null
+    availability?: {
+      from: string // ISO 8601 datetime
+      to: string // ISO 8601 datetime
+    }
+  }
+}
+
+/**
+ * Backend API response for draft operations
+ */
+export interface DraftApiResponse {
+  draft_id: string // UUID
+  teacher_id: number
+  title: string
+  description: string
+  settings: {
+    visibility: AssignmentVisibility
+    attempts?: number | null
+    availability?: {
+      from: string
+      to: string
+    }
+  }
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * Backend API validation error format
+ */
+export interface ApiFieldError {
+  field: string
+  message: string
+}
+
+/**
+ * Backend API error response
+ */
+export interface ApiErrorResponse {
+  code: string
+  message: string
+  errors?: ApiFieldError[]
+}
 
 /**
  * Assignment settings configuration
@@ -31,6 +89,8 @@ export interface AssignmentSettings {
  * This structure is designed to sync with backend draft APIs
  */
 export interface AssignmentFormData {
+  /** Draft ID from backend (null if not yet saved) */
+  draftId: string | null
   /** Assignment title (required) */
   title: string
   /** Assignment description/instructions (optional) */
@@ -54,6 +114,7 @@ export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettings = {
  * Default values for assignment form data
  */
 export const DEFAULT_ASSIGNMENT_FORM_DATA: AssignmentFormData = {
+  draftId: null,
   title: '',
   description: '',
   settings: { ...DEFAULT_ASSIGNMENT_SETTINGS },
@@ -63,6 +124,7 @@ export const DEFAULT_ASSIGNMENT_FORM_DATA: AssignmentFormData = {
  * Action types for assignment creation reducer
  */
 export type AssignmentCreationAction =
+  | { type: 'SET_DRAFT_ID'; payload: string | null }
   | { type: 'SET_TITLE'; payload: string }
   | { type: 'SET_DESCRIPTION'; payload: string }
   | { type: 'SET_SETTINGS'; payload: Partial<AssignmentSettings> }
@@ -98,6 +160,8 @@ export interface AssignmentBasicInfoFormProps {
   className?: string
   /** Whether the form is in a loading/submitting state */
   isSubmitting?: boolean
+  /** Server-side validation errors to display */
+  serverErrors?: AssignmentFormErrors
 }
 
 /**

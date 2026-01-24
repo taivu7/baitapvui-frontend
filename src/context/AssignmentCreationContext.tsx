@@ -37,6 +37,8 @@ interface AssignmentCreationContextValue {
   formData: AssignmentFormData
   /** Whether form has unsaved changes */
   isDirty: boolean
+  /** Update draft ID (from backend response) */
+  setDraftId: (draftId: string | null) => void
   /** Update assignment title */
   setTitle: (title: string) => void
   /** Update assignment description */
@@ -63,6 +65,9 @@ function assignmentCreationReducer(
   action: AssignmentCreationAction
 ): AssignmentFormData {
   switch (action.type) {
+    case 'SET_DRAFT_ID':
+      return { ...state, draftId: action.payload }
+
     case 'SET_TITLE':
       return { ...state, title: action.payload }
 
@@ -136,6 +141,11 @@ function loadFromStorage(): AssignmentFormData | null {
       console.warn('Invalid stored assignment data, clearing storage')
       sessionStorage.removeItem(ASSIGNMENT_CREATION_STORAGE_KEY)
       return null
+    }
+
+    // Ensure draftId exists (for backwards compatibility)
+    if (parsed.draftId === undefined) {
+      parsed.draftId = null
     }
 
     return parsed
@@ -212,6 +222,10 @@ export const AssignmentCreationProvider: React.FC<AssignmentCreationProviderProp
   }, [formData])
 
   // Action creators
+  const setDraftId = useCallback((draftId: string | null) => {
+    dispatch({ type: 'SET_DRAFT_ID', payload: draftId })
+  }, [])
+
   const setTitle = useCallback((title: string) => {
     dispatch({ type: 'SET_TITLE', payload: title })
   }, [])
@@ -258,6 +272,7 @@ export const AssignmentCreationProvider: React.FC<AssignmentCreationProviderProp
     () => ({
       formData,
       isDirty,
+      setDraftId,
       setTitle,
       setDescription,
       setSettings,
@@ -272,6 +287,7 @@ export const AssignmentCreationProvider: React.FC<AssignmentCreationProviderProp
     [
       formData,
       isDirty,
+      setDraftId,
       setTitle,
       setDescription,
       setSettings,

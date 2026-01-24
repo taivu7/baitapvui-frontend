@@ -2,14 +2,16 @@
  * CreateAssignment Page
  *
  * Assignment creation page for teachers.
- * Implements KAN-65, KAN-66, KAN-67 for basic info, settings, and state persistence.
+ * Implements KAN-65, KAN-66, KAN-67, KAN-68 for basic info, settings, state persistence,
+ * and real API integration.
  *
  * Features:
  * - Assignment basic info form (title, description)
  * - Assignment settings panel (class, due date, visibility, attempts)
  * - State persistence across navigation and page refresh
- * - Save draft and publish functionality
+ * - Save draft and publish functionality with real API calls
  * - Form validation before submission
+ * - Field-level error display from backend validation
  */
 
 import React, { useCallback, useState, useMemo } from 'react'
@@ -21,18 +23,21 @@ import {
   useAssignmentCreation,
 } from '../context/AssignmentCreationContext'
 import { useAssignmentFormValidation } from '../hooks'
+import { createDraft, updateDraft, DraftApiError } from '../services/assignmentDraftService'
+import { AssignmentFormErrors } from '../types/assignmentCreation'
 
 /**
  * Inner component that uses the AssignmentCreationContext
  */
 const CreateAssignmentContent: React.FC = () => {
   const navigate = useNavigate()
-  const { formData, isDirty, resetForm } = useAssignmentCreation()
+  const { formData, isDirty, resetForm, setDraftId } = useAssignmentCreation()
   const { isValidForDraft, isValidForPublish, validateForDraft, validateForPublish } =
     useAssignmentFormValidation(formData)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<AssignmentFormErrors>({})
 
   // Handle back navigation
   const handleGoBack = useCallback(() => {
@@ -46,25 +51,71 @@ const CreateAssignmentContent: React.FC = () => {
     navigate('/teacher/dashboard')
   }, [navigate, isDirty])
 
+  /**
+   * Parse backend field errors and map them to form fields
+   */
+  const parseFieldErrors = useCallback((error: DraftApiError): AssignmentFormErrors => {
+    const errors: AssignmentFormErrors = {}
+
+    if (error.isValidationError() && error.fieldErrors.length > 0) {
+      for (const fieldError of error.fieldErrors) {
+        // Map backend field names to frontend field names
+        switch (fieldError.field) {
+          case 'title':
+            errors.title = fieldError.message
+            break
+          case 'description':
+            errors.description = fieldError.message
+            break
+          case 'settings.attempts':
+          case 'attempts':
+            // No direct mapping, include in general error
+            break
+          case 'settings.availability.from':
+          case 'availability.from':
+            errors.dueDate = fieldError.message
+            break
+          case 'settings.availability.to':
+          case 'availability.to':
+            errors.dueDate = fieldError.message
+            break
+          default:
+            // For unmapped fields, we'll show in the general error
+            break
+        }
+      }
+    }
+
+    return errors
+  }, [])
+
   // Handle save draft
   const handleSaveDraft = useCallback(async () => {
     setSubmitError(null)
+    setFieldErrors({})
     const validation = validateForDraft()
 
     if (!validation.isValid) {
       setSubmitError('Please fix the errors before saving.')
+      setFieldErrors(validation.errors)
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
-      // await assignmentsService.saveDraft(formData)
-      console.log('Saving draft:', formData)
+      let response
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Use updateDraft if we have a draftId, otherwise createDraft
+      if (formData.draftId) {
+        response = await updateDraft(formData.draftId, formData)
+      } else {
+        response = await createDraft(formData)
+        // Store the returned draftId in context for future updates
+        setDraftId(response.draft_id)
+      }
+
+      console.log('Draft saved successfully:', response)
 
       // Clear storage and navigate back on success
       resetForm()
@@ -73,32 +124,62 @@ const CreateAssignmentContent: React.FC = () => {
       })
     } catch (error) {
       console.error('Failed to save draft:', error)
-      setSubmitError('Failed to save draft. Please try again.')
+
+      if (error instanceof DraftApiError) {
+        // Parse and display field-level errors
+        const parsedErrors = parseFieldErrors(error)
+        setFieldErrors(parsedErrors)
+
+        // Show general error message
+        if (error.isValidationError()) {
+          setSubmitError(error.message || 'Please fix the validation errors.')
+        } else {
+          setSubmitError(error.message || 'Failed to save draft. Please try again.')
+        }
+      } else {
+        setSubmitError('An unexpected error occurred. Please try again.')
+      }
+      // NOTE: Do NOT call resetForm() on error - keep the user's data
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, validateForDraft, resetForm, navigate])
+  }, [formData, validateForDraft, resetForm, navigate, setDraftId, parseFieldErrors])
 
   // Handle publish
   const handlePublish = useCallback(async () => {
     setSubmitError(null)
+    setFieldErrors({})
     const validation = validateForPublish()
 
     if (!validation.isValid) {
       const errorMessages = Object.values(validation.errors).filter(Boolean)
       setSubmitError(errorMessages.join('. ') || 'Please fix the errors before publishing.')
+      setFieldErrors(validation.errors)
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
-      // await assignmentsService.publish(formData)
-      console.log('Publishing assignment:', formData)
+      // First, save the draft with visibility set to 'published'
+      const publishData = {
+        ...formData,
+        settings: {
+          ...formData.settings,
+          visibility: 'published' as const,
+        },
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      let response
+
+      // Use updateDraft if we have a draftId, otherwise createDraft
+      if (formData.draftId) {
+        response = await updateDraft(formData.draftId, publishData)
+      } else {
+        response = await createDraft(publishData)
+      }
+
+      console.log('Assignment published successfully:', response)
 
       // Clear storage and navigate back on success
       resetForm()
@@ -107,11 +188,26 @@ const CreateAssignmentContent: React.FC = () => {
       })
     } catch (error) {
       console.error('Failed to publish assignment:', error)
-      setSubmitError('Failed to publish assignment. Please try again.')
+
+      if (error instanceof DraftApiError) {
+        // Parse and display field-level errors
+        const parsedErrors = parseFieldErrors(error)
+        setFieldErrors(parsedErrors)
+
+        // Show general error message
+        if (error.isValidationError()) {
+          setSubmitError(error.message || 'Please fix the validation errors.')
+        } else {
+          setSubmitError(error.message || 'Failed to publish assignment. Please try again.')
+        }
+      } else {
+        setSubmitError('An unexpected error occurred. Please try again.')
+      }
+      // NOTE: Do NOT call resetForm() on error - keep the user's data
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, validateForPublish, resetForm, navigate])
+  }, [formData, validateForPublish, resetForm, navigate, parseFieldErrors])
 
   // Handle discard
   const handleDiscard = useCallback(() => {
@@ -192,7 +288,7 @@ const CreateAssignmentContent: React.FC = () => {
         {/* Form Sections */}
         <div className="space-y-6">
           {/* Basic Info Form */}
-          <AssignmentBasicInfoForm isSubmitting={isSubmitting} />
+          <AssignmentBasicInfoForm isSubmitting={isSubmitting} serverErrors={fieldErrors} />
 
           {/* Settings Panel */}
           <AssignmentSettingsPanel isLoading={isSubmitting} />
