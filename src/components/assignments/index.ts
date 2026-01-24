@@ -18,3 +18,7 @@ export {
 } from './SubmissionProgressBar'
 export { default as AssignmentBasicInfoForm } from './AssignmentBasicInfoForm'
 export { default as AssignmentSettingsPanel } from './AssignmentSettingsPanel'
+export { default as ImportFileCard } from './ImportFileCard'
+export { default as SettingsSidebar } from './SettingsSidebar'
+export { default as QuestionCard } from './QuestionCard'
+export type { Question, QuestionOption } from './QuestionCard'
