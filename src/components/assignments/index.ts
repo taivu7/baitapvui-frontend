@@ -16,3 +16,5 @@ export {
   default as SubmissionProgressBar,
   SubmissionProgressBarSkeleton,
 } from './SubmissionProgressBar'
+export { default as AssignmentBasicInfoForm } from './AssignmentBasicInfoForm'
+export { default as AssignmentSettingsPanel } from './AssignmentSettingsPanel'
