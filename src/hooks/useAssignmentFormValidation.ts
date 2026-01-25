@@ -9,6 +9,14 @@ import { useMemo, useCallback } from 'react'
 import { AssignmentFormData, AssignmentFormErrors } from '../types/assignmentCreation'
 
 /**
+ * Question interface for validation purposes
+ */
+interface QuestionForValidation {
+  id: string
+  content: string
+}
+
+/**
  * Validation result interface
  */
 interface ValidationResult {
@@ -36,9 +44,13 @@ interface UseAssignmentFormValidationReturn {
 
 /**
  * Custom hook for assignment form validation
+ *
+ * @param formData - The form data to validate
+ * @param questions - Array of questions to validate (required for publish)
  */
 const useAssignmentFormValidation = (
-  formData: AssignmentFormData
+  formData: AssignmentFormData,
+  questions: QuestionForValidation[] = []
 ): UseAssignmentFormValidationReturn => {
   /**
    * Validate title
@@ -139,11 +151,16 @@ const useAssignmentFormValidation = (
     const dueDateError = validateDueDate(formData.settings.dueDate)
     if (dueDateError) errors.dueDate = dueDateError
 
+    // At least one question is required for publishing
+    if (questions.length === 0) {
+      errors.questions = 'At least one question is required to publish'
+    }
+
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
     }
-  }, [formData, validateTitle, validateDescription, validateClassId, validateDueDate])
+  }, [formData, validateTitle, validateDescription, validateClassId, validateDueDate, questions])
 
   /**
    * Current errors (for display purposes, validates as publish)

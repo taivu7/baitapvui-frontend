@@ -2,17 +2,20 @@
  * QuestionBuilder Component
  *
  * Implements KAN-75: Build Question Builder Base Layout
+ * Implements KAN-103: Inject Imported Questions into Question Builder
  *
  * Main container component for the Question Builder feature.
  * Provides the layout and integrates all question editing functionality.
  */
 
-import React from 'react'
-import { QuestionBuilderProps } from '../types'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { QuestionBuilderProps, DraftQuestion } from '../types'
 import { useQuestionBuilder } from '../context'
 import QuestionList from './QuestionList'
 import QuestionEditor from './QuestionEditor'
 import Button from '../../../components/ui/Button'
+import ImportQuestionsModal from '../../../components/assignments/ImportQuestionsModal'
+import { ToastContainer, useToast } from '../../../components/ui/Toast'
 
 const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
   assignmentId,
@@ -26,7 +29,17 @@ const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
     setCurrentQuestion,
     reorderQuestions,
     saveAllQuestions,
+    importQuestions,
   } = useQuestionBuilder()
+
+  // Modal state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+
+  // Toast notifications
+  const toast = useToast()
+
+  // Ref for scrolling to imported questions
+  const questionListRef = useRef<HTMLDivElement>(null)
 
   const handleAddQuestion = () => {
     addQuestion('multiple_choice')
@@ -41,10 +54,62 @@ const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
   const handleSaveAll = async () => {
     try {
       await saveAllQuestions()
+      toast.success('Questions Saved', 'All questions have been saved successfully.')
     } catch (error) {
       console.error('Failed to save questions:', error)
+      toast.error('Save Failed', 'Failed to save questions. Please try again.')
     }
   }
+
+  // Handle opening import modal
+  const handleOpenImportModal = useCallback(() => {
+    setIsImportModalOpen(true)
+  }, [])
+
+  // Handle closing import modal
+  const handleCloseImportModal = useCallback(() => {
+    setIsImportModalOpen(false)
+  }, [])
+
+  // Handle successful import
+  const handleImportSuccess = useCallback(
+    (importedDraftQuestions: DraftQuestion[]) => {
+      // Import the questions into the builder
+      importQuestions(importedDraftQuestions)
+
+      // Close the modal
+      setIsImportModalOpen(false)
+
+      // Show success toast
+      toast.success(
+        'Questions Imported',
+        `Successfully imported ${importedDraftQuestions.length} question${importedDraftQuestions.length !== 1 ? 's' : ''}.`
+      )
+
+      // Scroll to the first imported question after a short delay
+      setTimeout(() => {
+        if (questionListRef.current) {
+          const firstImportedElement = questionListRef.current.querySelector('[data-newly-imported="true"]')
+          if (firstImportedElement) {
+            firstImportedElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }
+      }, 100)
+    },
+    [importQuestions, toast]
+  )
+
+  // Effect to scroll to current question when it changes
+  useEffect(() => {
+    if (state.currentQuestionId && questionListRef.current) {
+      const currentElement = questionListRef.current.querySelector(
+        `[data-question-id="${state.currentQuestionId}"]`
+      )
+      if (currentElement) {
+        currentElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
+    }
+  }, [state.currentQuestionId])
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
@@ -58,6 +123,18 @@ const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Import from File button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleOpenImportModal}
+            icon="upload_file"
+            aria-label="Import questions from file"
+          >
+            <span className="hidden sm:inline">Import from File</span>
+            <span className="sm:hidden">Import</span>
+          </Button>
+
           <Button
             type="button"
             variant="secondary"
@@ -95,7 +172,7 @@ const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
       {/* Main layout */}
       <div className="flex-1 flex gap-6 overflow-hidden">
         {/* Left sidebar - Question list */}
-        <div className="w-80 flex-shrink-0 overflow-y-auto">
+        <div ref={questionListRef} className="w-80 flex-shrink-0 overflow-y-auto">
           <QuestionList
             questions={state.questions}
             currentQuestionId={state.currentQuestionId}
@@ -126,18 +203,29 @@ const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-6">
                   {state.questions.length === 0
-                    ? 'Add your first question to get started'
+                    ? 'Add your first question or import from a file'
                     : 'Select a question from the list to edit'}
                 </p>
                 {state.questions.length === 0 && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={handleAddQuestion}
-                    icon="add"
-                  >
-                    Add First Question
-                  </Button>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={handleAddQuestion}
+                      icon="add"
+                    >
+                      Add First Question
+                    </Button>
+                    <span className="text-gray-400 dark:text-gray-500 text-sm">or</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleOpenImportModal}
+                      icon="upload_file"
+                    >
+                      Import from File
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -176,6 +264,17 @@ const QuestionBuilder: React.FC<QuestionBuilderProps> = ({
           )}
         </div>
       </div>
+
+      {/* Import Questions Modal */}
+      <ImportQuestionsModal
+        isOpen={isImportModalOpen}
+        onClose={handleCloseImportModal}
+        assignmentId={assignmentId}
+        onImportSuccess={handleImportSuccess}
+      />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toast.toasts} onDismiss={toast.removeToast} />
     </div>
   )
 }

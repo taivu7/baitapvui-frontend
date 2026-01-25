@@ -23,7 +23,7 @@ const CONTENT_DEBOUNCE_DELAY = 300
 
 const QuestionEditor: React.FC<QuestionEditorProps> = ({
   question,
-  onUpdate,
+  onUpdate: _onUpdate,
   onDelete,
   className = '',
 }) => {

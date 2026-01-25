@@ -708,6 +708,47 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
     clearStorage(assignmentId)
   }, [assignmentId])
 
+  /**
+   * Import questions from external source (e.g., file import)
+   * Appends imported questions after existing questions with proper ordering
+   */
+  const importQuestions = useCallback((newQuestions: DraftQuestion[]) => {
+    setState((prev) => {
+      const startOrder = prev.questions.length
+
+      // Assign proper order to imported questions
+      const questionsWithOrder = newQuestions.map((q, index) => ({
+        ...q,
+        order: startOrder + index,
+        isNewlyImported: true,
+        isSaved: false,
+      }))
+
+      const allQuestions = [...prev.questions, ...questionsWithOrder]
+
+      // Set current question to the first imported one for immediate editing
+      const firstImportedId = questionsWithOrder[0]?.id || prev.currentQuestionId
+
+      return {
+        ...prev,
+        questions: allQuestions,
+        currentQuestionId: firstImportedId,
+        isDirty: true,
+      }
+    })
+
+    // Clear the isNewlyImported flag after a delay (for animation purposes)
+    setTimeout(() => {
+      setState((prev) => ({
+        ...prev,
+        questions: prev.questions.map((q) => ({
+          ...q,
+          isNewlyImported: false,
+        })),
+      }))
+    }, 3000) // 3 seconds highlight duration
+  }, [])
+
   // =============================================================================
   // Context Value
   // =============================================================================
@@ -734,6 +775,7 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
       saveQuestion,
       saveAllQuestions,
       loadQuestions,
+      importQuestions,
       resetBuilder,
     }),
     [
@@ -757,6 +799,7 @@ export const QuestionBuilderProvider: React.FC<QuestionBuilderProviderProps> = (
       saveQuestion,
       saveAllQuestions,
       loadQuestions,
+      importQuestions,
       resetBuilder,
     ]
   )

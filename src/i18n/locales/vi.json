@@ -1,0 +1,56 @@
+{
+  "common": {
+    "cancel": "Huy",
+    "close": "Dong",
+    "done": "Xong",
+    "retry": "Thu lai",
+    "tryAgain": "Thu lai"
+  },
+  "importQuestions": {
+    "title": "Nhap cau hoi",
+    "dropzone": {
+      "dragAndDrop": "Keo va tha tep cua ban vao day",
+      "dropHere": "Tha tep vao day",
+      "orClickToBrowse": "hoac nhan de duyet",
+      "clickOrDragToReplace": "Nhan hoac keo de thay the",
+      "supportedFormats": "DOCX, PDF",
+      "maxFileSize": "Toi da {{size}}"
+    },
+    "progress": {
+      "uploading": "Dang tai len",
+      "uploadingFile": "Dang tai len: {{fileName}}",
+      "processing": "Dang xu ly tai lieu...",
+      "extracting": "Dang trich xuat cau hoi...",
+      "percentUploaded": "Da tai len {{percent}}%"
+    },
+    "success": {
+      "title": "Nhap thanh cong!",
+      "questionsImported": "Da nhap {{count}} cau hoi",
+      "questionsImported_plural": "Da nhap {{count}} cau hoi",
+      "multipleChoice": "{{count}} Trac nghiem",
+      "essay": "{{count}} Tu luan"
+    },
+    "actions": {
+      "import": "Nhap cau hoi",
+      "uploadFile": "Tai len tep tai lieu. Ho tro dinh dang DOCX va PDF toi da 10MB"
+    },
+    "errors": {
+      "invalidFileType": "Chi ho tro tep DOCX va PDF.",
+      "fileTooLarge": "Kich thuoc tep vuot qua gioi han 10MB.",
+      "networkError": "Loi mang. Vui long kiem tra ket noi va thu lai.",
+      "parsingError": "Khong the phan tich tep. Vui long dam bao tep chua cau hoi hop le.",
+      "unauthorized": "Ban khong duoc phep nhap cau hoi. Vui long dang nhap voi tai khoan giao vien.",
+      "forbidden": "Ban khong co quyen nhap cau hoi vao bai tap nay.",
+      "notFound": "Khong tim thay bai tap. Co the no da bi xoa.",
+      "serverError": "Loi may chu. Vui long thu lai sau.",
+      "unknownError": "Da xay ra loi khong mong muon. Vui long thu lai."
+    }
+  },
+  "errorBoundary": {
+    "title": "Da xay ra loi",
+    "message": "Da xay ra loi khong mong muon. Vui long thu lai.",
+    "modalTitle": "Loi nhap cau hoi",
+    "modalMessage": "Da xay ra loi khong mong muon khi nhap cau hoi. Vui long dong hop thoai nay va thu lai.",
+    "viewDetails": "Xem chi tiet loi"
+  }
+}

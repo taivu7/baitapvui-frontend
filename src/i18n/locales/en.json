@@ -1,0 +1,56 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "done": "Done",
+    "retry": "Retry",
+    "tryAgain": "Try Again"
+  },
+  "importQuestions": {
+    "title": "Import Questions",
+    "dropzone": {
+      "dragAndDrop": "Drag and drop your file here",
+      "dropHere": "Drop file here",
+      "orClickToBrowse": "or click to browse",
+      "clickOrDragToReplace": "Click or drag to replace",
+      "supportedFormats": "DOCX, PDF",
+      "maxFileSize": "Max {{size}}"
+    },
+    "progress": {
+      "uploading": "Uploading",
+      "uploadingFile": "Uploading: {{fileName}}",
+      "processing": "Processing document...",
+      "extracting": "Extracting questions...",
+      "percentUploaded": "{{percent}}% uploaded"
+    },
+    "success": {
+      "title": "Successfully Imported!",
+      "questionsImported": "{{count}} question have been imported",
+      "questionsImported_plural": "{{count}} questions have been imported",
+      "multipleChoice": "{{count}} Multiple Choice",
+      "essay": "{{count}} Essay"
+    },
+    "actions": {
+      "import": "Import Questions",
+      "uploadFile": "Upload document file. Supports DOCX and PDF files up to 10MB"
+    },
+    "errors": {
+      "invalidFileType": "Only DOCX and PDF files are supported.",
+      "fileTooLarge": "File size exceeds the 10MB limit.",
+      "networkError": "Network error. Please check your connection and try again.",
+      "parsingError": "Failed to parse the file. Please ensure it contains valid questions.",
+      "unauthorized": "You are not authorized to import questions. Please log in as a teacher.",
+      "forbidden": "You do not have permission to import questions to this assignment.",
+      "notFound": "Assignment not found. It may have been deleted.",
+      "serverError": "Server error. Please try again later.",
+      "unknownError": "An unexpected error occurred. Please try again."
+    }
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "An unexpected error occurred. Please try again.",
+    "modalTitle": "Import Error",
+    "modalMessage": "An unexpected error occurred while importing questions. Please close this dialog and try again.",
+    "viewDetails": "View error details"
+  }
+}

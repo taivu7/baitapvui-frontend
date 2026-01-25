@@ -150,6 +150,7 @@ export interface AssignmentFormErrors {
   classId?: string
   dueDate?: string
   dueTime?: string
+  questions?: string
 }
 
 /**

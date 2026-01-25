@@ -61,6 +61,7 @@ export interface DraftQuestion {
   media: MediaAttachment[]
   isSaved: boolean // Whether synced with backend
   backendId?: string // ID from backend after save
+  isNewlyImported?: boolean // Flag for highlighting newly imported questions
 }
 
 /**
@@ -198,6 +199,9 @@ export interface QuestionBuilderContextValue {
   saveQuestion: (questionId: string) => Promise<void>
   saveAllQuestions: () => Promise<void>
   loadQuestions: (assignmentId: string) => Promise<void>
+
+  // Import operations
+  importQuestions: (questions: DraftQuestion[]) => void
 
   // State management
   resetBuilder: () => void

@@ -8,7 +8,7 @@
 
 import React, { useRef, useState } from 'react'
 import { MediaAttachmentToolbarProps, MediaType } from '../types'
-import { getMediaTypeIcon, formatFileSize } from '../utils'
+import { getMediaTypeIcon } from '../utils'
 
 const MediaAttachmentToolbar: React.FC<MediaAttachmentToolbarProps> = ({
   media,
