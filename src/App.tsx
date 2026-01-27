@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './pages/LoginPage'
 import TeacherDashboard from './pages/TeacherDashboard'
 import CreateAssignment from './pages/CreateAssignment'
+import MyAssignmentsDashboard from './pages/MyAssignmentsDashboard'
 import DashboardLayout from './components/layout/DashboardLayout'
 import { AuthProvider } from './context/AuthContext'
 import RoleBasedRoute from './components/auth/RoleBasedRoute'
@@ -18,6 +19,16 @@ function App() {
               <RoleBasedRoute allowedRole="teacher">
                 <DashboardLayout>
                   <TeacherDashboard />
+                </DashboardLayout>
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/teacher/assignments"
+            element={
+              <RoleBasedRoute allowedRole="teacher">
+                <DashboardLayout>
+                  <MyAssignmentsDashboard />
                 </DashboardLayout>
               </RoleBasedRoute>
             }

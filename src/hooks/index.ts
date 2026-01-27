@@ -14,3 +14,5 @@ export { default as useAssignmentFormValidation } from './useAssignmentFormValid
 export { default as useAssignmentActions } from './useAssignmentActions'
 export { default as useImportQuestions } from './useImportQuestions'
 export { default as useTranslation } from './useTranslation'
+export { default as useMyAssignments } from './useMyAssignments'
+export { default as useAssignmentCards } from './useAssignmentCards'
